@@ -1,47 +1,43 @@
 pipeline {
-  agent any
-  stages {
-    stage('Clone') {
-      steps {
-        git 'https://github.com/ffaattmm/flask-jenkins-demo.git'
-      }
-    }
+    agent any
 
-    stage('Build Docker Image') {
-      steps {
-        script {
-          dockerImage = docker.build("ffaattmm/flask-jenkins-demo")
+    stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("ffaattmm/flask-jenkins-demo")
+                }
+            }
         }
-      }
-    }
 
-    stage('Push to DockerHub') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-          script {
-            sh "docker login -u $DOCKER_USER -p $DOCKER_PASS"
-            sh "docker push ffaattmm/flask-jenkins-demo"
-          }
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    script {
+                        sh "docker login -u $DOCKER_USER -p $DOCKER_PASS"
+                        sh "docker push ffaattmm/flask-jenkins-demo"
+                    }
+                }
+            }
         }
-      }
-    }
 
-    stage('Run Docker Container') {
-      steps {
-        script {
-          sh 'docker rm -f flask-app || true'
-          sh 'docker run -d -p 5000:5000 --name flask-app ffaattmm/flask-jenkins-demo'
+        stage('Run Docker Container') {
+            steps {
+                script {
+                    sh 'docker rm -f flask-app || true'
+                    sh 'docker run -d -p 5000:5000 --name flask-app ffaattmm/flask-jenkins-demo'
+                }
+            }
         }
-      }
-    }
 
-    stage('Test') {
-      steps {
-        script {
-          sh 'sleep 3'
-          sh './test.sh'
+        stage('Test') {
+            steps {
+                script {
+                    sh 'chmod +x test.sh'
+                    sh './test.sh'
+                }
+            }
         }
-      }
     }
-  }
 }
+
